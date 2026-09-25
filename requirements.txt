@@ -2,3 +2,4 @@ Flask
 requests
 Pillow
 ddddocr
+gunicorn; sys_platform != "win32"

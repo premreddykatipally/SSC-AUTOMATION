@@ -57,4 +57,4 @@ The dashboard listens on localhost by default. To expose it on a trusted LAN, se
 
 ## Hosting note
 
-The current server and SQLite ledger are designed for a local computer. Before putting the dashboard on the public internet, use HTTPS, a production WSGI server, strong access control, and persistent storage. Free hosts with an ephemeral filesystem can erase the payment ledger on restart or redeploy. Do not deploy this app there with live recharge enabled until persistent storage and access controls are in place.
+See [DEPLOY_ORACLE.md](DEPLOY_ORACLE.md) for the Oracle VM setup with HTTPS, Gunicorn, dashboard authentication, and persistent SQLite storage. Free hosts with an ephemeral filesystem can erase the payment ledger on restart or redeploy. Do not deploy this app there with live recharge enabled until persistent storage and access controls are in place.

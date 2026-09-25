@@ -8,6 +8,7 @@ import secrets
 from functools import wraps
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, Response
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from ssc_engine import engine
 from recharge import prepare_recharge, submit_recharge
@@ -22,14 +23,15 @@ from database import (
 )
 
 app = Flask(__name__, template_folder="templates")
-app.secret_key = "ssc-billing-automation-cash-portal"
+app.secret_key = os.environ.get("SSC_SECRET_KEY") or secrets.token_hex(32)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 
 @app.before_request
 def protect_dashboard():
     # A LAN listener must have its own password; portal credentials are never used here.
     remote = ipaddress.ip_address(request.remote_addr or "127.0.0.1")
     password = os.environ.get("SSC_APP_PASSWORD", "")
-    if not remote.is_loopback:
+    if password or not remote.is_loopback:
         auth = request.authorization
         if not password or not auth or not secrets.compare_digest(auth.password or "", password):
             return Response("Dashboard password required", 401,
