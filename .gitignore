@@ -1,0 +1,27 @@
+# Local credentials and customer records
+config.json
+ssc_billing.db
+*.db-journal
+*.db-shm
+*.db-wal
+.env
+.env.*
+
+# Python/runtime files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.log
+
+# Captured portal pages and local investigation files
+*_sample.html
+sample_*
+test_*.py
+verify_*.py
+find_*.py
+inspect_*.py
+parse_*.py
+analyze_customers.py
+extract_defaults.py
+get_submit_code.py

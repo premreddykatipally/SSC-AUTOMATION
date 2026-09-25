@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSC Ezybill | Subscriber Plans</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#4f46e5',
+              600: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .active-month {
+      background-color: #4f46e5 !important;
+      border-color: #6366f1 !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-500/20">
+          SSC
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-white leading-tight">Sri Sai Cable & Broadband</h1>
+          <p class="text-xs text-slate-400">Subscriber plans</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <!-- Status Indicator -->
+        <div id="statusBadge" class="flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+          <span class="w-2 h-2 rounded-full bg-amber-400 mr-2 animate-pulse"></span>
+          Checking Portal...
+        </div>
+
+        <button onclick="toggleSettingsModal()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-sm" title="Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+        <button onclick="refreshAll(true)" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-sm" title="Refresh">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- WALLET STATUS -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 w-full">
+      <div class="glass rounded-2xl p-4 border-l-4 border-l-indigo-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="flex items-center space-x-2">
+              <p class="text-xs font-semibold uppercase tracking-wider text-indigo-400">💳 Portal Wallet Balance</p>
+              <span id="walletLiveBadge" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                CHECKING
+              </span>
+            </div>
+            <h3 id="statWalletBalance" class="text-2xl font-black text-white mt-1 transition-all duration-300">—</h3>
+            <p id="statWalletStatus" class="text-xs text-slate-400 mt-1">Checking portal balance…</p>
+          </div>
+          <div class="flex flex-col items-end gap-2">
+            <div class="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
+              <i class="fa-solid fa-wallet text-xl"></i>
+            </div>
+            <a href="https://sms.sscbpl.com/index.php/Dashboard" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition" title="Opens the Ezybilling dashboard; select TOPUP there">
+              <i class="fa-solid fa-plus mr-1"></i>Top up <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+  </div>
+
+  <!-- MAIN BODY -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full flex-1 space-y-6">
+
+    <!-- SECTION 1: SEARCH CUSTOMER & RENEW PLAN -->
+    <div class="glass rounded-2xl p-4 sm:p-6 shadow-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+              <span class="p-1.5 bg-indigo-500/20 text-indigo-400 rounded-lg text-sm"><i class="fa-solid fa-user-check"></i></span>
+              <span>Search Subscriber & Select Plan</span>
+            </h2>
+            <span id="subscribersBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              Loading subscribers…
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Search saved portal subscribers by name, STB, VC number, or mobile. Sync to refresh the list.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="syncPortalSubscribers()" id="btnSyncPortal" class="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-500/40 text-xs font-semibold transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Sync from Portal</span>
+          </button>
+        </div>
+      </div>
+      <p id="syncFeedback" role="status" class="hidden text-xs mb-3"></p>
+
+      <!-- Search Input -->
+      <div>
+        <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <input type="text" id="searchInput" aria-label="Search subscriber" oninput="handleSearchInput(event)" onkeydown="if(event.key === 'Enter') triggerSearch()" placeholder="Name, STB, VC, or mobile" 
+          class="w-full pl-10 pr-24 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm transition shadow-inner">
+        
+        <button onclick="triggerSearch()" class="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition flex items-center space-x-1.5">
+          <span>Search</span>
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+        </div>
+
+        <!-- Search results -->
+        <div id="searchResultsDropdown" class="hidden mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto divide-y divide-slate-800"></div>
+      </div>
+
+      <!-- Selected Customer Profile & Months Selection Panel -->
+      <div id="selectedCustomerPanel" class="hidden mt-6 pt-6 border-t border-slate-800 space-y-5">
+        
+        <!-- Customer Banner -->
+        <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl font-bold">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 id="panelCustName" class="text-base font-bold text-white">Ramesh Kumar</h3>
+                <span id="panelCustStatusBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+                  EXPIRED
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
+                <span><i class="fa-solid fa-hashtag mr-1 text-slate-500"></i>STB: <b id="panelCustSTB" class="text-slate-200">10023456</b></span>
+                <span><i class="fa-solid fa-phone mr-1 text-slate-500"></i><span id="panelCustMobile">9848023456</span></span>
+                <span><i class="fa-solid fa-location-dot mr-1 text-slate-500"></i><span id="panelCustAddress">Siddipet</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-right border-t md:border-t-0 border-slate-800 pt-2 md:pt-0">
+            <p id="panelPlanLabel" class="text-xs text-slate-400">Portal plan</p>
+            <p id="panelCustPlan" class="text-sm font-semibold text-indigo-400">SSC Telugu Super HD</p>
+            <p class="text-xs text-slate-400 mt-0.5">Select a plan below to see its price.</p>
+          </div>
+        </div>
+
+        <!-- Plan Selection -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Select a plan:
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <button type="button" onclick="selectPlan('renew')" id="btnPlan-renew" class="plan-btn py-3 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-center transition flex flex-col items-center">
+              <span class="text-sm font-bold">Renew previous plan</span><span class="text-[11px] text-slate-400 mt-0.5">Active or deactivated customers</span>
+            </button>
+            <button type="button" onclick="selectPlan('month')" id="btnPlan-month" class="plan-btn py-3 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-center transition flex flex-col items-center">
+              <span class="text-sm font-bold">1 Month</span><span class="text-[11px] text-slate-400 mt-0.5">1NCF+SSCBPL _Telugu Best Fit · ₹280</span>
+            </button>
+            <button type="button" onclick="selectPlan('six')" id="btnPlan-six" class="plan-btn py-3 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-center transition flex flex-col items-center">
+              <span class="text-sm font-bold">6 Months</span><span class="text-[11px] text-slate-400 mt-0.5">SSCBPL_6 Months TBF Pack · ₹1,680</span>
+            </button>
+            <button type="button" onclick="selectPlan('year')" id="btnPlan-year" class="plan-btn py-3 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-center transition flex flex-col items-center">
+              <span class="text-sm font-bold">1 Year</span><span class="text-[11px] text-slate-400 mt-0.5">SSCBPL_1 YEAR TBF PACK · ₹3,080</span>
+            </button>
+          </div>
+          <div id="extendControls" class="hidden mt-3 p-3 rounded-xl border border-slate-700 bg-slate-900 flex flex-col sm:flex-row sm:items-center gap-3">
+            <button type="button" onclick="selectPlan('extend')" id="btnPlan-extend" class="plan-btn py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-center">
+              Extend current package
+            </button>
+            <label class="text-xs text-slate-300 flex items-center gap-2">Months to add
+              <input id="extendMonths" type="number" min="1" max="36" step="1" placeholder="Current package term" onchange="onExtendMonthsChange()" class="w-36 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+            </label>
+            <span class="text-[11px] text-slate-400">The portal extends in units of the current package term.</span>
+          </div>
+        </div>
+
+        <!-- Summary & Action Button -->
+        <div class="p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1 text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="text-slate-400">Selected plan:</span>
+              <span id="previewPlanName" class="font-bold text-slate-200">Choose a plan</span>
+            </div>
+            <div class="flex items-center space-x-2 text-slate-400">
+              <span>Cash price:</span><span id="previewCashDue" class="font-bold text-emerald-400">Choose a plan</span>
+            </div>
+            <div class="flex items-center space-x-2 text-slate-400">
+              <span>Portal billed total:</span><span id="previewPortalTotal" class="font-bold text-amber-300">Review to check</span>
+            </div>
+            <div class="flex items-center space-x-2 text-slate-400">
+              <span>Wallet debit:</span><span id="previewWalletCharge" class="font-bold text-amber-300">Review to check</span>
+            </div>
+            <div id="previewExpiryRow" class="hidden flex items-center space-x-2 text-slate-400">
+              <span>New expiry:</span><span id="previewNewExpiry" class="font-bold text-slate-200"></span>
+            </div>
+            <label id="cashPriceEntry" class="hidden text-slate-300">Cash collection price (₹)
+              <input id="customCashPrice" type="number" min="0.01" step="0.01" oninput="updateRenewButton()" class="ml-2 w-32 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-white" />
+            </label>
+          </div>
+
+          <button onclick="executeCustomerRenewal()" id="btnSubmitRenewal" disabled class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center space-x-2 opacity-50">
+            <i class="fa-solid fa-bolt"></i>
+            <span id="renewButtonLabel">Select a plan</span>
+          </button>
+        </div>
+        <p id="renewNotice" class="text-xs text-amber-300">Select a customer and plan. The portal quote loads automatically; the green button activates the plan.</p>
+
+      </div>
+    </div>
+
+    <section class="glass rounded-2xl p-4 sm:p-6 shadow-2xl" aria-labelledby="collectionTitle">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 id="collectionTitle" class="text-lg font-bold text-white"><i class="fa-solid fa-receipt text-indigo-400 mr-2"></i>Customer collections</h2>
+          <p class="text-xs text-slate-400 mt-1">Successful recharges grouped by day. Mark Paid when you receive the customer's money.</p>
+        </div>
+        <button id="refreshCollections" type="button" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh</button>
+      </div>
+      <div role="tablist" aria-label="Collection status" class="grid grid-cols-2 gap-3 max-w-md mb-5">
+        <button id="tabUnpaid" type="button" role="tab" aria-selected="true" aria-controls="collectionList" onclick="setCollectionTab('PENDING')" class="rounded-xl px-4 py-3 text-sm font-bold border bg-amber-500/20 border-amber-500 text-amber-200">Unpaid</button>
+        <button id="tabPaid" type="button" role="tab" aria-selected="false" aria-controls="collectionList" onclick="setCollectionTab('COLLECTED')" class="rounded-xl px-4 py-3 text-sm font-bold border bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800">Paid</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <div class="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4"><p class="text-xs font-semibold uppercase tracking-wide text-amber-300">Money to collect</p><p id="pendingTotal" class="text-2xl font-black mt-1">₹0.00</p><p id="pendingCount" class="text-xs text-slate-400 mt-1">0 recharges</p></div>
+        <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4"><p class="text-xs font-semibold uppercase tracking-wide text-emerald-300">Money collected</p><p id="collectedTotal" class="text-2xl font-black mt-1">₹0.00</p><p id="collectedCount" class="text-xs text-slate-400 mt-1">0 paid</p></div>
+      </div>
+      <p id="collectionFeedback" role="status" class="hidden text-xs text-amber-300 mb-3"></p>
+      <div id="collectionList" role="tabpanel" class="space-y-6"><p class="text-sm text-slate-400">Loading…</p></div>
+    </section>
+
+  </main>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-sliders text-indigo-400"></i>
+          <span>Portal & Operator Settings</span>
+        </h3>
+        <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-400 mb-1">Ezybill Portal URL</label>
+          <input type="text" id="cfgUrl" value="https://sms.sscbpl.com" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-400 mb-1">LCO Username</label>
+            <input type="text" id="cfgUsername" placeholder="Operator ID" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-400 mb-1">LCO Password</label>
+            <input type="password" id="cfgPassword" placeholder="••••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between">
+          <div>
+            <p class="font-bold text-white">Simulation / Demo Mode</p>
+            <p class="text-slate-400">Demo display mode. Renewals are paused in every mode.</p>
+          </div>
+          <input type="checkbox" id="cfgSimulation" class="w-4 h-4 accent-indigo-600 rounded">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveSettings()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition">Save Settings</button>
+        <button onclick="testLogin()" id="btnConnectPortal" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs border border-slate-700 transition">Connect Portal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    let selectedCustomer = null;
+    let selectedPlan = null;
+    let pendingRecharge = null;
+    let rechargeBusy = false;
+    let previewError = '';
+    let lastKnownWalletBalance = null;
+    let isSimulationMode = false;
+
+    async function refreshAll(forceRefresh = false) {
+      await Promise.all([fetchStatus(forceRefresh), loadCollections()]);
+    }
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+
+    let collectionStatus = 'PENDING';
+    let collectionRequest = 0;
+    const collectionRupees = value => `₹${(Number(value) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+    function collectionDay(value) {
+      const day = String(value || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return 'Date unavailable';
+      const date = new Date(`${day}T12:00:00`);
+      return Number.isNaN(date.getTime()) ? day : date.toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'});
+    }
+
+    function setCollectionTab(status) {
+      collectionStatus = status;
+      const unpaid = status === 'PENDING';
+      const tabUnpaid = document.getElementById('tabUnpaid');
+      const tabPaid = document.getElementById('tabPaid');
+      tabUnpaid.setAttribute('aria-selected', String(unpaid));
+      tabPaid.setAttribute('aria-selected', String(!unpaid));
+      tabUnpaid.className = `rounded-xl px-4 py-3 text-sm font-bold border ${unpaid ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'}`;
+      tabPaid.className = `rounded-xl px-4 py-3 text-sm font-bold border ${unpaid ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-emerald-500/20 border-emerald-500 text-emerald-200'}`;
+      document.getElementById('collectionList').innerHTML = '<p class="text-sm text-slate-400">Loading…</p>';
+      loadCollections();
+    }
+
+    function renderCollections(rows) {
+      const paid = collectionStatus === 'COLLECTED';
+      const list = document.getElementById('collectionList');
+      if (!rows.length) {
+        list.innerHTML = `<p class="rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-400">${paid ? 'No customers marked Paid yet.' : 'No unpaid recharges. Successful recharges will appear here.'}</p>`;
+        return;
+      }
+      rows.sort((a, b) => String(paid ? b.collected_at || b.timestamp : b.timestamp).localeCompare(String(paid ? a.collected_at || a.timestamp : a.timestamp)) || b.id - a.id);
+      const groups = new Map();
+      for (const row of rows) {
+        const day = String((paid ? row.collected_at || row.timestamp : row.timestamp) || '').slice(0, 10);
+        if (!groups.has(day)) groups.set(day, []);
+        groups.get(day).push(row);
+      }
+      list.innerHTML = [...groups].map(([day, items]) => `
+        <section class="pt-5 border-t border-slate-700 first:pt-0 first:border-t-0">
+          <div class="flex justify-between gap-3 text-xs font-bold text-slate-400 mb-3"><h3>${escapeHtml(collectionDay(day))}</h3><span>${items.length} · ${collectionRupees(items.reduce((sum, row) => sum + (Number(row.plan_amount) || 0), 0))}</span></div>
+          <div class="space-y-3">${items.map(row => `
+            <article class="rounded-xl border border-slate-800 bg-slate-900 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-white">${escapeHtml(row.customer_name || 'Unnamed customer')}</p>
+                <p class="text-xs text-slate-400">STB ${escapeHtml(row.stb_number || '—')} · ${escapeHtml(row.mobile || 'No mobile')}</p>
+                <p class="text-xs text-slate-400 break-words">${escapeHtml(row.plan_name || 'Plan unavailable')}</p>
+              </div>
+              <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                <strong class="text-sm">${collectionRupees(row.plan_amount)}</strong>
+                <button type="button" data-id="${Number(row.id)}" class="payment-action px-3 py-2 rounded-lg text-xs font-bold ${paid ? 'bg-slate-800 hover:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-500'}">${paid ? 'Undo Paid' : 'Paid'}</button>
+              </div>
+            </article>`).join('')}</div>
+        </section>`).join('');
+    }
+
+    async function loadCollections() {
+      const requestId = ++collectionRequest;
+      const status = collectionStatus;
+      const feedback = document.getElementById('collectionFeedback');
+      try {
+        const response = await fetch(`/api/live-database?filter=${status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (requestId !== collectionRequest) return;
+        const summary = data.summary || {};
+        document.getElementById('pendingTotal').textContent = collectionRupees(summary.cash_pending_total);
+        document.getElementById('collectedTotal').textContent = collectionRupees(summary.cash_collected_total);
+        document.getElementById('pendingCount').textContent = `${summary.pending_count || 0} recharges`;
+        document.getElementById('collectedCount').textContent = `${summary.collected_count || 0} paid`;
+        renderCollections(data.customers || []);
+        feedback.classList.add('hidden');
+      } catch (error) {
+        if (requestId !== collectionRequest) return;
+        feedback.textContent = `Could not load collections: ${error.message}`;
+        feedback.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('refreshCollections').addEventListener('click', loadCollections);
+    document.addEventListener('click', async event => {
+      const button = event.target.closest('.payment-action');
+      if (!button) return;
+      button.disabled = true;
+      const feedback = document.getElementById('collectionFeedback');
+      try {
+        const response = await fetch('/api/toggle-cash', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({id: Number(button.dataset.id), status: collectionStatus === 'COLLECTED' ? 'PENDING' : 'COLLECTED'})
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Update failed');
+        await loadCollections();
+      } catch (error) {
+        feedback.textContent = `Could not update payment: ${error.message}`;
+        feedback.classList.remove('hidden');
+        button.disabled = false;
+      }
+    });
+
+    async function syncPortalSubscribers() {
+      const btn = document.getElementById('btnSyncPortal');
+      const feedback = document.getElementById('syncFeedback');
+      btn.disabled = true;
+      feedback.className = 'text-xs mb-3 text-indigo-300';
+      feedback.textContent = 'Syncing subscribers from the portal…';
+      try {
+        const res = await fetch('/api/sync-customers', {method: 'POST'});
+        const data = await res.json();
+        feedback.className = `text-xs mb-3 ${data.success ? 'text-emerald-300' : 'text-amber-300'}`;
+        feedback.textContent = data.message || (data.success ? 'Subscribers synced' : 'Sync failed');
+        if (data.success) await refreshAll();
+      } catch (e) {
+        feedback.className = 'text-xs mb-3 text-amber-300';
+        feedback.textContent = 'Sync failed: ' + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function fetchStatus(forceRefresh = false) {
+      try {
+        const badge = document.getElementById('statusBadge');
+        if (forceRefresh) {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 mr-2 animate-pulse"></span> Syncing Portal...`;
+        }
+
+        const url = `/api/status?_t=${Date.now()}` + (forceRefresh ? '&refresh=1' : '');
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        isSimulationMode = !!data.status.simulation_mode;
+        const subscribers = data.subscribers || {};
+        document.getElementById('subscribersBadge').textContent = `${subscribers.total || 0} saved STBs (${subscribers.active || 0} active)`;
+        const walletBadge = document.getElementById('walletLiveBadge');
+        walletBadge.textContent = isSimulationMode ? 'DEMO' : data.status.logged_in ? 'LIVE' : 'OFFLINE';
+        walletBadge.className = `inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${isSimulationMode ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : data.status.logged_in ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-300 border-red-500/30'}`;
+        updateRenewButton();
+
+        // Status badge
+        if (data.status.simulation_mode) {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-400 mr-2"></span> Simulation Mode`;
+          badge.className = "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30";
+        } else if (data.status.logged_in) {
+          const opName = (data.status.operator || 'Connected').replace(/\./g, ' ').trim();
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span> ${escapeHtml(opName)}`;
+          badge.className = "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+        } else {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-400 mr-2"></span> Disconnected`;
+          badge.className = "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30";
+        }
+
+        // Metrics - safely parse all numbers
+        const walletBal = Number(data.status.wallet_balance) || 0;
+        const threshold = Number(data.status.low_wallet_alert_threshold) || 500;
+        const syncTime = escapeHtml(data.status.last_balance_update || 'Not yet synced');
+        
+        const walletEl = document.getElementById('statWalletBalance');
+        walletEl.textContent = `Rs. ${walletBal.toFixed(2)}`;
+
+        // Flash animation when balance updates
+        if (lastKnownWalletBalance !== null && lastKnownWalletBalance !== walletBal) {
+          walletEl.classList.add('text-emerald-400', 'scale-110');
+          setTimeout(() => walletEl.classList.remove('text-emerald-400', 'scale-110'), 1200);
+        }
+        lastKnownWalletBalance = walletBal;
+
+        if (walletBal < threshold) {
+          document.getElementById('statWalletStatus').innerHTML = `
+            <span class="text-amber-400 font-bold">⚠️ Low portal balance</span> 
+            <span class="text-slate-500 text-[10px] block mt-0.5">Synced at ${syncTime}</span>`;
+          walletEl.className = "text-2xl font-black text-amber-400 mt-1 transition-all duration-300";
+        } else {
+          document.getElementById('statWalletStatus').innerHTML = `
+            <span class="text-emerald-400 font-medium">● Portal balance connected</span>
+            <span class="text-slate-500 text-[10px] block mt-0.5">Synced at ${syncTime}</span>`;
+          walletEl.className = "text-2xl font-black text-white mt-1 transition-all duration-300";
+        }
+
+      } catch (e) {
+        console.error("Status error:", e);
+        isSimulationMode = false;
+        updateRenewButton();
+        const badge = document.getElementById('statusBadge');
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-400 mr-2"></span> Connection Error`;
+        badge.className = "flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30";
+      }
+    }
+
+    function handleSearchInput(e) {
+      selectedCustomer = null;
+      selectedPlan = null;
+      pendingRecharge = null;
+      previewError = '';
+      updateRenewButton();
+      document.getElementById('selectedCustomerPanel').classList.add('hidden');
+      document.getElementById('searchResultsDropdown').classList.add('hidden');
+    }
+
+    async function triggerSearch() {
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) {
+        document.getElementById('searchInput').focus();
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/customer/search?query=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (document.getElementById('searchInput').value.trim() !== q) return;
+        const dd = document.getElementById('searchResultsDropdown');
+        dd.innerHTML = '';
+
+        if (data.matches && data.matches.length) {
+          dd.classList.remove('hidden');
+          const heading = document.createElement('div');
+          heading.className = 'p-2 text-xs font-semibold text-slate-400';
+          heading.textContent = `${data.matches.length} matching customer${data.matches.length === 1 ? '' : 's'} — select one`;
+          dd.appendChild(heading);
+          data.matches.forEach(m => {
+            const item = document.createElement('div');
+            item.className = "p-3 hover:bg-slate-800 cursor-pointer flex justify-between items-center transition";
+            item.innerHTML = `
+              <div>
+                <b class="text-white">${escapeHtml(m.name)}</b> <span class="text-slate-400 text-xs">(STB: ${escapeHtml(m.stb_number)})</span>
+                <p class="text-[11px] text-indigo-400">${escapeHtml(m.mobile || 'No mobile')} &bull; ${escapeHtml(m.status || 'UNKNOWN')} &bull; ${escapeHtml(m.current_plan || 'No plan')}</p>
+              </div>
+              <button class="px-2.5 py-1 bg-indigo-600 rounded text-xs font-bold text-white">Select</button>
+            `;
+            item.onclick = () => {
+              selectCustomer(m);
+              dd.classList.add('hidden');
+            };
+            dd.appendChild(item);
+          });
+        } else if (data.success && data.customer) {
+          dd.classList.remove('hidden');
+          const item = document.createElement('button');
+          item.className = 'w-full p-3 text-left text-white hover:bg-slate-800';
+          item.textContent = `${data.customer.name} (STB: ${data.customer.stb_number}) — Select`;
+          item.onclick = () => { selectCustomer(data.customer); dd.classList.add('hidden'); };
+          dd.appendChild(item);
+        } else {
+          dd.classList.remove('hidden');
+          dd.innerHTML = '<div class="p-3 text-sm text-slate-400">No customer found. Check the name or sync subscribers from the portal.</div>';
+        }
+      } catch (e) {
+        console.error("Search error:", e);
+      }
+    }
+
+    function selectCustomer(cust) {
+      selectedCustomer = cust;
+      document.getElementById('selectedCustomerPanel').classList.remove('hidden');
+
+      document.getElementById('panelCustName').textContent = cust.name || "Subscriber";
+      document.getElementById('panelCustSTB').textContent = cust.stb_number || cust.customer_id;
+      document.getElementById('panelCustMobile').textContent = cust.mobile || "N/A";
+      document.getElementById('panelCustAddress').textContent = cust.address || "Local";
+      const portalPlan = cust.current_plan || '';
+      document.getElementById('panelPlanLabel').textContent = portalPlan.startsWith('SSC Pack ') ? 'Portal package IDs' : 'Portal plan';
+      document.getElementById('panelCustPlan').textContent = portalPlan || 'Plan unavailable';
+
+      // Update expired / active badge
+      const expiry = cust.current_expiry || '';
+      const isActive = cust.status === 'ACTIVE';
+      document.getElementById('panelCustStatusBadge').textContent = cust.status || 'UNKNOWN';
+      document.getElementById('panelCustStatusBadge').className = !isActive
+        ? 'px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400 border border-red-500/30'
+        : 'px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      document.getElementById('extendControls').classList.toggle('hidden', !isActive);
+      document.getElementById('extendMonths').value = '';
+      document.getElementById('cashPriceEntry').classList.add('hidden');
+      document.getElementById('customCashPrice').value = '';
+
+      selectedPlan = null;
+      pendingRecharge = null;
+      previewError = '';
+      ['renew', 'month', 'six', 'year', 'extend'].forEach(key => {
+        const btn = document.getElementById('btnPlan-' + key);
+        btn.className = 'plan-btn py-3 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-center transition flex flex-col items-center';
+      });
+      document.getElementById('previewPlanName').textContent = 'Choose a plan';
+      document.getElementById('previewCashDue').textContent = 'Choose a plan';
+      document.getElementById('previewWalletCharge').textContent = 'Review to check';
+      document.getElementById('previewPortalTotal').textContent = 'Review to check';
+      document.getElementById('previewExpiryRow').classList.add('hidden');
+      updateRenewButton();
+    }
+
+    function selectPlan(code) {
+      if (!selectedCustomer || rechargeBusy) return;
+      const plans = {
+        month: {name: '1NCF+SSCBPL _Telugu Best Fit', price: 280, months: 1},
+        six: {name: 'SSCBPL_6 Months TBF Pack', price: 1680, months: 6},
+        year: {name: 'SSCBPL_1 YEAR TBF PACK', price: 3080, months: 12},
+        extend: {name: 'Current active package', price: null, months: null}
+      };
+      const previous = Object.values(plans).find(p => p.name.toLowerCase() === (selectedCustomer.current_plan || '').trim().toLowerCase());
+      plans.renew = previous
+        ? {name: previous.name, price: previous.price, months: previous.months}
+        : {name: selectedCustomer.current_plan || 'Previous plan unavailable', price: null, months: 1};
+      selectedPlan = {code, ...plans[code]};
+      pendingRecharge = null;
+      previewError = '';
+      document.getElementById('cashPriceEntry').classList.add('hidden');
+      document.getElementById('previewWalletCharge').textContent = 'Checking portal...';
+      document.getElementById('previewPortalTotal').textContent = 'Checking portal...';
+      document.getElementById('previewExpiryRow').classList.add('hidden');
+      ['renew', 'month', 'six', 'year', 'extend'].forEach(key => {
+        const btn = document.getElementById('btnPlan-' + key);
+        if (!btn) return;
+        if (key === code) {
+          btn.className = "plan-btn active-month py-3 px-3 rounded-xl border border-indigo-500 bg-indigo-600 text-white font-bold text-xs text-center transition flex flex-col items-center shadow-lg shadow-indigo-600/30";
+        } else {
+          btn.className = "plan-btn py-3 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-center transition flex flex-col items-center";
+        }
+      });
+      document.getElementById('previewPlanName').textContent = selectedPlan.name || 'Previous plan unavailable';
+      document.getElementById('previewCashDue').textContent = selectedPlan.price === null
+        ? 'Checking previous package price'
+        : `₹${selectedPlan.price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      updateRenewButton();
+      prepareSelectedPlan();
+    }
+
+    function onExtendMonthsChange() {
+      if (selectedPlan && selectedPlan.code === 'extend') selectPlan('extend');
+    }
+
+    function updateRenewButton() {
+      const submit = document.getElementById('btnSubmitRenewal');
+      const notice = document.getElementById('renewNotice');
+      if (rechargeBusy) return;
+      const customPriceRequired = pendingRecharge && pendingRecharge.cash_price === null;
+      const enteredPrice = Number(document.getElementById('customCashPrice').value);
+      submit.disabled = !selectedCustomer || !selectedPlan || !pendingRecharge || isSimulationMode
+        || (customPriceRequired && !(enteredPrice > 0));
+      submit.classList.toggle('opacity-50', submit.disabled);
+      document.getElementById('renewButtonLabel').textContent = !selectedPlan ? 'Select a plan'
+        : pendingRecharge ? (pendingRecharge.action === 'extension' ? 'Extend current plan' : 'Activate selected plan')
+        : previewError ? 'Plan unavailable' : 'Checking portal...';
+      notice.textContent = isSimulationMode ? 'Connect to the live SSC portal before recharging.'
+        : previewError ? previewError
+        : pendingRecharge ? 'The green button makes the final live portal request. Check the customer and amounts before clicking it.'
+        : selectedPlan ? 'Checking the live portal package and amount. This check does not activate the plan.'
+        : 'Select a customer and plan. The portal quote loads automatically.';
+    }
+
+    async function prepareSelectedPlan() {
+      if (!selectedCustomer || !selectedPlan || isSimulationMode) return;
+      const customerId = selectedCustomer.customer_id;
+      const stbNumber = selectedCustomer.stb_number;
+      const planCode = selectedPlan.code;
+      const extendMonthsValue = planCode === 'extend' ? document.getElementById('extendMonths').value.trim() : '';
+      rechargeBusy = true;
+      const btn = document.getElementById('btnSubmitRenewal');
+      btn.disabled = true;
+      document.getElementById('extendMonths').disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Checking portal...</span>';
+      try {
+        const res = await fetch('/api/recharge/prepare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({customer_id: customerId, stb_number: stbNumber, plan_code: planCode,
+            extend_months: extendMonthsValue ? Number(extendMonthsValue) : null})
+        });
+        const data = await res.json();
+        if (!selectedCustomer || !selectedPlan || selectedCustomer.customer_id !== customerId || selectedCustomer.stb_number !== stbNumber || selectedPlan.code !== planCode) return;
+        if (!data.success) {
+          previewError = data.message || 'The portal could not prepare this plan.';
+          document.getElementById('previewPortalTotal').textContent = 'Unavailable';
+          document.getElementById('previewWalletCharge').textContent = 'Unavailable';
+          return;
+        }
+        pendingRecharge = data;
+        selectedPlan.name = data.plan_name;
+        selectedPlan.price = data.cash_price;
+        if (planCode === 'extend') document.getElementById('extendMonths').value = data.selected_months;
+        document.getElementById('previewPlanName').textContent = data.plan_name;
+        if (data.cash_price === null) {
+          document.getElementById('cashPriceEntry').classList.remove('hidden');
+          document.getElementById('previewCashDue').textContent = 'Enter cash price below';
+        } else {
+          document.getElementById('cashPriceEntry').classList.add('hidden');
+          document.getElementById('previewCashDue').textContent = `₹${Number(data.cash_price).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        document.getElementById('previewPortalTotal').textContent = `₹${Number(data.portal_total).toFixed(2)}`;
+        document.getElementById('previewWalletCharge').textContent = `₹${Number(data.wallet_debit).toFixed(2)}`;
+        document.getElementById('previewExpiryRow').classList.toggle('hidden', !data.new_expiry);
+        document.getElementById('previewNewExpiry').textContent = data.new_expiry || '';
+      } catch (e) {
+        previewError = 'Could not contact the portal: ' + e.message;
+      } finally {
+        rechargeBusy = false;
+        document.getElementById('extendMonths').disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span id="renewButtonLabel"></span>`;
+        updateRenewButton();
+      }
+    }
+
+    async function executeCustomerRenewal() {
+      if (rechargeBusy || !selectedCustomer || !selectedPlan || !pendingRecharge) return;
+      const customCash = pendingRecharge.cash_price === null ? Number(document.getElementById('customCashPrice').value) : null;
+      if (pendingRecharge.cash_price === null && !(customCash > 0)) return;
+      rechargeBusy = true;
+      const btn = document.getElementById('btnSubmitRenewal');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Submitting recharge...</span>';
+      const token = pendingRecharge.token;
+      try {
+        const res = await fetch('/api/renew', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({token, cash_price: customCash})
+        });
+        const data = await res.json();
+        pendingRecharge = null;
+        rechargeBusy = false;
+        btn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span id="renewButtonLabel"></span>`;
+        updateRenewButton();
+        if (data.success) {
+          alert(`Portal accepted recharge.\n\nCustomer: ${selectedCustomer.name}\nPlan: ${selectedPlan.name}\nPortal response: ${data.message}`);
+          document.getElementById('selectedCustomerPanel').classList.add('hidden');
+          document.getElementById('searchInput').value = '';
+          selectedCustomer = null;
+          selectedPlan = null;
+          pendingRecharge = null;
+          updateRenewButton();
+          await refreshAll();
+        } else {
+          previewError = data.message || 'The portal did not accept this recharge.';
+          updateRenewButton();
+          alert(`Recharge result:\n${previewError}`);
+        }
+      } catch (e) {
+        rechargeBusy = false;
+        pendingRecharge = null;
+        previewError = 'Submission result unknown. Check the SSC portal before retrying.';
+        btn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span id="renewButtonLabel"></span>`;
+        updateRenewButton();
+        alert(previewError);
+      }
+    }
+
+    function toggleSettingsModal() {
+      const m = document.getElementById('settingsModal');
+      m.classList.toggle('hidden');
+      if (!m.classList.contains('hidden')) loadSettingsModal();
+    }
+
+    async function loadSettingsModal() {
+      try {
+        const res = await fetch('/api/settings');
+        const cfg = await res.json();
+        document.getElementById('cfgUrl').value = cfg.portal_url || "https://sms.sscbpl.com";
+        document.getElementById('cfgUsername').value = cfg.username || "";
+        document.getElementById('cfgSimulation').checked = !!cfg.simulation_mode;
+      } catch (e) {}
+    }
+
+    async function saveSettings() {
+      try {
+        const payload = {
+          portal_url: document.getElementById('cfgUrl').value.trim(),
+          username: document.getElementById('cfgUsername').value.trim(),
+          simulation_mode: document.getElementById('cfgSimulation').checked
+        };
+        const pwd = document.getElementById('cfgPassword').value;
+        if (pwd) payload.password = pwd;
+
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("Settings saved!");
+          toggleSettingsModal();
+          await refreshAll();
+        }
+      } catch (e) {
+        alert("Save error: " + e.message);
+      }
+    }
+
+    async function testLogin() {
+      const btn = document.getElementById('btnConnectPortal');
+      btn.disabled = true;
+      btn.textContent = "Connecting to portal...";
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('cfgUsername').value.trim(),
+            password: document.getElementById('cfgPassword').value,
+            simulation_mode: document.getElementById('cfgSimulation').checked
+          })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.textContent = "Connect Portal";
+
+        if (data.success) {
+          alert(`Connected!\nOperator: ${data.operator || data.mode}\nWallet Balance: Rs. ${data.wallet}`);
+          toggleSettingsModal();
+          await refreshAll();
+        } else {
+          alert(`Connection failed:\n${data.message}`);
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = "Connect Portal";
+        alert("Connection error: " + e.message);
+      }
+    }
+
+    // Initial load then poll every 6 seconds for real-time live sync
+    refreshAll();
+    setInterval(refreshAll, 6000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "portal_url": "https://sms.sscbpl.com",
+  "username": "",
+  "password": "",
+  "simulation_mode": true,
+  "session_keepalive_minutes": 10,
+  "low_wallet_alert_threshold": 500.0,
+  "web_port": 5000,
+  "web_host": "127.0.0.1"
+}
