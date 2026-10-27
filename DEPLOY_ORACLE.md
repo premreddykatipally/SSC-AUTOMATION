@@ -84,7 +84,17 @@ sudo systemctl status ssc-automation
 
 ## 5. Put Nginx and HTTPS in front
 
-Create `/etc/nginx/sites-available/ssc-automation` with `sudo nano`. Replace `billing.example.com` with your DNS name:
+### OCI Firewall Requirement (Crucial)
+Oracle Cloud Ubuntu images run an internal OS firewall (`iptables`) that drops all incoming web traffic by default, even if ports 80 and 443 are opened in the OCI Security List. Run these commands on the VM:
+
+```bash
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+sudo apt install -y iptables-persistent
+sudo netfilter-persistent save
+```
+
+Create `/etc/nginx/sites-available/ssc-automation` with `sudo nano`. Replace `billing.example.com` with your DNS name or VM Public IP:
 
 ```nginx
 server {
