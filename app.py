@@ -189,6 +189,16 @@ def api_export_csv():
         headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
 
+@app.route("/api/clear-history", methods=["POST"])
+def api_clear_history():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM transactions")
+    cursor.execute("DELETE FROM sqlite_sequence WHERE name='transactions'")
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Recharge history cleared successfully"})
+
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json() or {}

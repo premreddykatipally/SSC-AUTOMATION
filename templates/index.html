@@ -113,6 +113,10 @@
           <p class="text-xs text-slate-400 mt-0.5">Search saved portal subscribers by name, STB, VC number, or mobile. Sync to refresh the list.</p>
         </div>
         <div class="flex items-center space-x-2">
+          <button onclick="toggleSubscribersModal()" id="btnBrowseSubscribers" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-users text-indigo-400"></i>
+            <span>Browse All Subscribers</span>
+          </button>
           <button onclick="syncPortalSubscribers()" id="btnSyncPortal" class="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-500/40 text-xs font-semibold transition flex items-center space-x-1.5">
             <i class="fa-solid fa-arrows-rotate"></i>
             <span>Sync from Portal</span>
@@ -241,7 +245,12 @@
           <h2 id="collectionTitle" class="text-lg font-bold text-white"><i class="fa-solid fa-receipt text-indigo-400 mr-2"></i>Customer collections</h2>
           <p class="text-xs text-slate-400 mt-1">Successful recharges grouped by day. Mark Paid when you receive the customer's money.</p>
         </div>
-        <button id="refreshCollections" type="button" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh</button>
+        <div class="flex items-center space-x-2">
+          <button onclick="clearRechargeHistory()" type="button" class="px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold transition" title="Clear all local recharge history">
+            <i class="fa-solid fa-trash mr-1"></i>Clear History
+          </button>
+          <button id="refreshCollections" type="button" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh</button>
+        </div>
       </div>
       <div role="tablist" aria-label="Collection status" class="grid grid-cols-2 gap-3 max-w-md mb-5">
         <button id="tabUnpaid" type="button" role="tab" aria-selected="true" aria-controls="collectionList" onclick="setCollectionTab('PENDING')" class="rounded-xl px-4 py-3 text-sm font-bold border bg-amber-500/20 border-amber-500 text-amber-200">Unpaid</button>
@@ -296,6 +305,58 @@
       <div class="flex gap-2 pt-2">
         <button onclick="saveSettings()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition">Save Settings</button>
         <button onclick="testLogin()" id="btnConnectPortal" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs border border-slate-700 transition">Connect Portal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBSCRIBERS DIRECTORY MODAL -->
+  <div id="subscribersModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/80">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-users text-indigo-400"></i>
+            <span>Live Subscriber Directory</span>
+            <span id="modalSubCount" class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 ml-2">Loading...</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">Live records synchronized from Ezybill STB Management (sms.sscbpl.com)</p>
+        </div>
+        <button onclick="toggleSubscribersModal()" class="text-slate-400 hover:text-white text-lg p-2"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="p-4 border-b border-slate-800 bg-slate-900/90 flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+          <input type="text" id="modalSubSearch" oninput="debounceModalSearch()" placeholder="Filter by Name, STB, VC, Mobile, or Address..." class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex gap-1.5">
+          <button type="button" onclick="setModalFilter('ALL')" id="subFilterAll" class="px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition">All</button>
+          <button type="button" onclick="setModalFilter('ACTIVE')" id="subFilterActive" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Active</button>
+          <button type="button" onclick="setModalFilter('DEACTIVE')" id="subFilterDeactive" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Deactive</button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase font-bold tracking-wider border-b border-slate-800 sticky top-0">
+              <tr>
+                <th class="py-2.5 px-3">Subscriber</th>
+                <th class="py-2.5 px-3">STB / Serial</th>
+                <th class="py-2.5 px-3">VC Number</th>
+                <th class="py-2.5 px-3">Mobile</th>
+                <th class="py-2.5 px-3">Location / Address</th>
+                <th class="py-2.5 px-3 text-center">Status</th>
+                <th class="py-2.5 px-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="modalSubscribersBody" class="divide-y divide-slate-800/60 bg-slate-950/40">
+              <tr>
+                <td colspan="7" class="py-12 text-center text-slate-500">Loading subscribers…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -833,6 +894,104 @@
         btn.disabled = false;
         btn.textContent = "Connect Portal";
         alert("Connection error: " + e.message);
+      }
+    }
+
+    let modalSubFilter = 'ALL';
+    let modalSubDebounce = null;
+
+    function toggleSubscribersModal() {
+      const m = document.getElementById('subscribersModal');
+      m.classList.toggle('hidden');
+      if (!m.classList.contains('hidden')) {
+        document.getElementById('modalSubSearch').value = '';
+        setModalFilter('ALL');
+      }
+    }
+
+    function setModalFilter(status) {
+      modalSubFilter = status;
+      ['ALL', 'ACTIVE', 'DEACTIVE'].forEach(s => {
+        const btn = document.getElementById('subFilter' + s.charAt(0) + s.slice(1).toLowerCase());
+        if (!btn) return;
+        if (s === status) {
+          btn.className = "px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition";
+        } else {
+          btn.className = "px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition";
+        }
+      });
+      loadModalSubscribers();
+    }
+
+    function debounceModalSearch() {
+      clearTimeout(modalSubDebounce);
+      modalSubDebounce = setTimeout(() => loadModalSubscribers(), 250);
+    }
+
+    async function loadModalSubscribers() {
+      const q = document.getElementById('modalSubSearch').value.trim();
+      const tbody = document.getElementById('modalSubscribersBody');
+      tbody.innerHTML = '<tr><td colspan="7" class="py-12 text-center text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-lg text-indigo-400 mr-2"></i>Loading live subscribers...</td></tr>';
+
+      try {
+        const url = `/api/subscribers?status=${modalSubFilter}&q=${encodeURIComponent(q)}&limit=200`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const subs = data.subscribers || [];
+        const stats = data.stats || {};
+        
+        document.getElementById('modalSubCount').textContent = `${stats.total || subs.length} Total (${stats.active || 0} Active)`;
+
+        if (!subs.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="py-12 text-center text-slate-500">No subscribers match your search or filter.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = subs.map(s => {
+          const isActive = s.status === 'ACTIVE';
+          const safeData = JSON.stringify(s).replace(/'/g, "&#39;");
+          return `
+            <tr class="hover:bg-slate-900/80 transition">
+              <td class="py-2.5 px-3 font-semibold text-white">${escapeHtml(s.name || 'Unassigned')}</td>
+              <td class="py-2.5 px-3 font-mono text-slate-300 font-bold">${escapeHtml(s.stb_number || '—')}</td>
+              <td class="py-2.5 px-3 font-mono text-slate-400">${escapeHtml(s.vc_number || '—')}</td>
+              <td class="py-2.5 px-3 text-slate-300">${escapeHtml(s.mobile || '—')}</td>
+              <td class="py-2.5 px-3 text-slate-400 max-w-xs truncate" title="${escapeHtml(s.address || '')}">${escapeHtml(s.address || 'Local')}</td>
+              <td class="py-2.5 px-3 text-center">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">
+                  ${isActive ? 'ACTIVE' : 'DEACTIVE'}
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-center">
+                <button type="button" onclick='selectFromModal(${safeData})' class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 rounded text-xs font-bold text-white transition">Select</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-red-400">Error loading subscribers: ${escapeHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    function selectFromModal(cust) {
+      toggleSubscribersModal();
+      selectCustomer(cust);
+      document.getElementById('searchInput').value = cust.name || cust.stb_number;
+    }
+
+    async function clearRechargeHistory() {
+      if (!confirm("Are you sure you want to clear all recharge history? This will reset the collections register to zero.")) return;
+      try {
+        const res = await fetch('/api/clear-history', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          await refreshAll();
+          alert("Recharge history has been cleared.");
+        } else {
+          alert("Failed to clear history: " + (data.message || 'Error'));
+        }
+      } catch (e) {
+        alert("Error: " + e.message);
       }
     }
 
