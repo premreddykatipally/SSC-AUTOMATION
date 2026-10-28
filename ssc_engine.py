@@ -276,12 +276,27 @@ class SSCEngine:
         url = f"{base_url}/index.php/Das/stbmanagement_list//"
         try:
             resp = self.session.post(url, data=payload, timeout=30)
-            if "Welcome/index" in resp.url:
+            if "Welcome/index" in resp.url or "login" in resp.url.lower():
                 self.is_logged_in = False
-                self.login()
+                login_result = self.login()
+                if not login_result.get("success"):
+                    return {"success": False, "message": f"Portal session expired; {login_result.get('message')}"}
                 resp = self.session.post(url, data=payload, timeout=30)
 
-            data = json.loads(resp.text.strip())
+            if not resp.ok:
+                return {"success": False, "message": f"Portal customer sync failed with HTTP {resp.status_code}. Check portal access from this server."}
+            body = resp.text.strip()
+            if not body:
+                return {"success": False, "message": "Portal returned an empty customer response. Retry sync; if it persists, check portal access from this server."}
+            try:
+                data = json.loads(body)
+            except json.JSONDecodeError:
+                if "<html" in body[:500].lower() or "<!doctype html" in body[:500].lower():
+                    self.is_logged_in = False
+                    return {"success": False, "message": "Portal returned a web page instead of customer data. Reconnect the portal in Settings and retry."}
+                return {"success": False, "message": "Portal returned invalid customer data. Check the portal connection and retry."}
+            if not isinstance(data, dict):
+                return {"success": False, "message": "Portal returned customer data in an unexpected format."}
             rows = data.get("rows", [])
             if not rows:
                 return {"success": False, "message": "No STB records returned by portal"}
