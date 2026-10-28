@@ -69,9 +69,26 @@ class SSCEngine:
             }
             self.save_config()
 
+        # Hosting credentials are supplied through the service's secret environment variables.
+        portal_username = os.environ.get("SSC_PORTAL_USERNAME")
+        portal_password = os.environ.get("SSC_PORTAL_PASSWORD")
+        if portal_username:
+            self.config["username"] = portal_username
+        if portal_password:
+            self.config["password"] = portal_password
+        if portal_username and portal_password:
+            self.config["simulation_mode"] = False
+
     def save_config(self):
+        saved_config = dict(self.config)
+        if os.environ.get("SSC_PORTAL_USERNAME"):
+            saved_config["username"] = ""
+        if os.environ.get("SSC_PORTAL_PASSWORD"):
+            saved_config["password"] = ""
+        if os.environ.get("SSC_PORTAL_USERNAME") and os.environ.get("SSC_PORTAL_PASSWORD"):
+            saved_config["simulation_mode"] = True
         with open(self.config_path, "w", encoding="utf-8") as f:
-            json.dump(self.config, f, indent=2)
+            json.dump(saved_config, f, indent=2)
 
     def preprocess_captcha(self, img_bytes):
         """Clean noise and isolate dark digits from background waves"""
@@ -143,14 +160,16 @@ class SSCEngine:
             uname = username or self.config.get("username", "")
             pwd = password or self.config.get("password", "")
 
-            # If simulation mode is active or no credentials supplied, run simulated session
-            if self.config.get("simulation_mode", False) or not uname or not pwd:
+            if self.config.get("simulation_mode", False):
                 logger.info("Running in Simulation Mode")
                 self.is_logged_in = True
                 self.operator_name = f"LCO Demo ({uname or 'Operator'})"
                 self.wallet_balance = 5450.00
                 self.last_login_time = datetime.now()
                 return {"success": True, "mode": "simulation", "message": "Connected in Simulation Mode", "wallet": self.wallet_balance, "operator": self.operator_name}
+
+            if not uname or not pwd:
+                return {"success": False, "message": "Portal username and password are missing. Set SSC_PORTAL_USERNAME and SSC_PORTAL_PASSWORD in the service environment."}
 
             base_url = self.config.get("portal_url", "https://sms.sscbpl.com").rstrip("/")
             self.is_logged_in = False
