@@ -29,25 +29,24 @@ cp config.example.json config.json
 chmod 600 config.json
 ```
 
-The example config starts in simulation mode with blank portal credentials. Enter the real portal credentials only after HTTPS and the dashboard password are working. **Do not copy the local Windows `config.json` or customer database through GitHub.** To migrate existing customer/payment records, transfer the SQLite file privately to the VM and set its owner to `ubuntu` and permissions to `600`.
+The example config starts in simulation mode with blank portal credentials. The dashboard has no sign-in, so restrict access to trusted users before entering real portal credentials. **Do not copy the local Windows `config.json` or customer database through GitHub.** To migrate existing customer/payment records, transfer the SQLite file privately to the VM and set its owner to `ubuntu` and permissions to `600`.
 
-## 3. Protect the dashboard
+## 3. Set the secret key
 
-Generate two independent random values with `openssl rand -hex 32`. Store them in a root-owned environment file:
+Generate a random value with `openssl rand -hex 32`. Store it in a root-owned environment file:
 
 ```bash
 sudo install -m 600 -o root -g root /dev/null /etc/ssc-automation.env
 sudo nano /etc/ssc-automation.env
 ```
 
-Put these two lines in that file, replacing both placeholders with different random values:
+Put this line in that file, replacing the placeholder:
 
 ```text
-SSC_APP_PASSWORD=PASTE_FIRST_RANDOM_VALUE
-SSC_SECRET_KEY=PASTE_SECOND_RANDOM_VALUE
+SSC_SECRET_KEY=PASTE_RANDOM_VALUE
 ```
 
-The browser will prompt for the dashboard password. Do not put it in GitHub, a URL, or a public chat.
+The dashboard does not prompt for a password. Restrict network access before using live portal credentials or recharges. Do not put the secret key in GitHub, a URL, or a public chat.
 
 ## 4. Run the app as a service
 
@@ -125,7 +124,7 @@ sudo certbot --nginx -d billing.example.com
 sudo certbot renew --dry-run
 ```
 
-If UFW is already configured, review its rules before enabling it. Oracle's VCN ingress rules and the VM firewall must both allow 80/443. Confirm `https://billing.example.com/` prompts for the dashboard password and shows the app. Do not test the final recharge button with a real customer while checking deployment.
+If UFW is already configured, review its rules before enabling it. Oracle's VCN ingress rules and the VM firewall must both allow 80/443. Confirm `https://billing.example.com/` shows the app. This example exposes the dashboard to anyone who can reach the site; restrict access to trusted users before enabling live recharges. Do not test the final recharge button with a real customer while checking deployment.
 
 ## 6. Back up and update
 

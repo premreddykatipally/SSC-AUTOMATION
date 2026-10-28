@@ -3,11 +3,10 @@ import sys
 import csv
 import io
 import json
-import ipaddress
 import secrets
 from functools import wraps
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from ssc_engine import engine
@@ -28,14 +27,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 
 @app.before_request
 def protect_dashboard():
-    # A LAN listener must have its own password; portal credentials are never used here.
-    remote = ipaddress.ip_address(request.remote_addr or "127.0.0.1")
-    password = os.environ.get("SSC_APP_PASSWORD", "")
-    if password or not remote.is_loopback:
-        auth = request.authorization
-        if not password or not auth or not secrets.compare_digest(auth.password or "", password):
-            return Response("Dashboard password required", 401,
-                            {"WWW-Authenticate": 'Basic realm="SSC Dashboard"'})
     if request.method == "POST":
         origin = request.headers.get("Origin")
         if origin and origin != request.host_url.rstrip("/"):
